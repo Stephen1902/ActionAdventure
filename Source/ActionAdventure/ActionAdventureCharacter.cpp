@@ -71,6 +71,7 @@ void AActionAdventureCharacter::BeginPlay()
 
 void AActionAdventureCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
@@ -83,7 +84,6 @@ void AActionAdventureCharacter::SetupPlayerInputComponent(class UInputComponent*
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::Look);
-
 	}
 
 }
@@ -108,6 +108,8 @@ void AActionAdventureCharacter::Move(const FInputActionValue& Value)
 		// add movement 
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
+
+		
 	}
 }
 
