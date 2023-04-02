@@ -33,18 +33,35 @@ class AActionAdventureCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* MoveAction;
 
+	/** Run Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* RunAction;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	float WalkingMovementSpeed = 200.f;
+	
+	/** Movement speed when running*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	float RunningMovementSpeed = 500.f;
+
 public:
 	AActionAdventureCharacter();
 	
-
+	void AddCoinToTotal(int32 CoinNumToAddIn); 
 protected:
 
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
+
+	/** Called when the running key is pressed */
+	void RunStart(const FInputActionValue& Value);
+
+	/** Called when the running key is pressed */
+	void RunEnd(const FInputActionValue& Value);
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
@@ -60,5 +77,8 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+private:
+	int32 CollectedCoins = 0;
 };
 

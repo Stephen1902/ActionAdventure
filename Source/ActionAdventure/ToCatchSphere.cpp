@@ -10,7 +10,7 @@
 AToCatchSphere::AToCatchSphere()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	CollisionComp = CreateDefaultSubobject<UBoxComponent>(TEXT("Root Comp"));
 	SetRootComponent(CollisionComp);
@@ -76,7 +76,6 @@ void AToCatchSphere::OnEndOverlap(UPrimitiveComponent* HitComp, AActor* OtherAct
 void AToCatchSphere::TimelineFloatReturn(float Value)
 {
 	MeshComp->SetRelativeLocation(FMath::Lerp(MeshStartLocation, MeshEndLocation, Value));
-	GEngine->AddOnScreenDebugMessage(0, 0.f, FColor::Red, TEXT("Moving"));
 }
 
 void AToCatchSphere::SetMovementCurveInfo()

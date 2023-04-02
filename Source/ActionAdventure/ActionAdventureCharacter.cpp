@@ -32,7 +32,7 @@ AActionAdventureCharacter::AActionAdventureCharacter()
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkingMovementSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
@@ -49,6 +49,13 @@ AActionAdventureCharacter::AActionAdventureCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+}
+
+void AActionAdventureCharacter::AddCoinToTotal(int32 CoinNumToAddIn)
+{
+	CollectedCoins += CoinNumToAddIn;
+	const FString StringToDisplay = "Player has " + FString::FromInt(CollectedCoins) + " coins.";
+	GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Green, *StringToDisplay);
 }
 
 void AActionAdventureCharacter::BeginPlay()
@@ -81,6 +88,8 @@ void AActionAdventureCharacter::SetupPlayerInputComponent(class UInputComponent*
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::Move);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::RunStart);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &AActionAdventureCharacter::RunEnd);
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::Look);
@@ -110,6 +119,22 @@ void AActionAdventureCharacter::Move(const FInputActionValue& Value)
 		AddMovementInput(RightDirection, MovementVector.X);
 
 		
+	}
+}
+
+void AActionAdventureCharacter::RunStart(const FInputActionValue& Value)
+{
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = RunningMovementSpeed;
+	}
+}
+
+void AActionAdventureCharacter::RunEnd(const FInputActionValue& Value)
+{
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = WalkingMovementSpeed;
 	}
 }
 
