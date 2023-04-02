@@ -33,6 +33,7 @@ AActionAdventureCharacter::AActionAdventureCharacter()
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingMovementSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = WalkingMovementSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
@@ -63,6 +64,9 @@ void AActionAdventureCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	// Set that this character can crouch.  This is only for AI / Nav movement.  To avoid issues later.
+	GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	
 	//Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
@@ -88,9 +92,12 @@ void AActionAdventureCharacter::SetupPlayerInputComponent(class UInputComponent*
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::Move);
-		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::RunStart);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &AActionAdventureCharacter::RunStart);
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &AActionAdventureCharacter::RunEnd);
 
+		//Crouching
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AActionAdventureCharacter::SetPlayerCrouch);
+		
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::Look);
 	}
@@ -135,6 +142,19 @@ void AActionAdventureCharacter::RunEnd(const FInputActionValue& Value)
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = WalkingMovementSpeed;
+	}
+}
+
+void AActionAdventureCharacter::SetPlayerCrouch(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Calling Crouch"));
+	if (!GetCharacterMovement()->IsCrouching())
+	{
+		Crouch();
+	}
+	else
+	{
+		UnCrouch();
 	}
 }
 

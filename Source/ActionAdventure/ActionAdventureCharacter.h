@@ -31,15 +31,18 @@ class AActionAdventureCharacter : public ACharacter
 
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* MoveAction;
+	UInputAction* MoveAction;
 
 	/** Run Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* RunAction;
+	UInputAction* RunAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* CrouchAction;
 
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	class UInputAction* LookAction;
+	UInputAction* LookAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	float WalkingMovementSpeed = 200.f;
@@ -51,18 +54,21 @@ class AActionAdventureCharacter : public ACharacter
 public:
 	AActionAdventureCharacter();
 	
-	void AddCoinToTotal(int32 CoinNumToAddIn); 
-protected:
+	void AddCoinToTotal(int32 CoinNumToAddIn);
 
+protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
 	/** Called when the running key is pressed */
 	void RunStart(const FInputActionValue& Value);
 
-	/** Called when the running key is pressed */
+	/** Called when the running key is released */
 	void RunEnd(const FInputActionValue& Value);
 
+	/** Called for crouching input */
+	void SetPlayerCrouch(const FInputActionValue& Value);
+	
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 	
