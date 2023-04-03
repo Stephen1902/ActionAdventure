@@ -56,6 +56,11 @@ public:
 	
 	void AddCoinToTotal(int32 CoinNumToAddIn);
 
+	void SetPlayerDeath() { bIsDead = true;}
+	
+	UFUNCTION(BlueprintCallable, Category = "Gameplay")
+	bool GetPlayerIsDead() const  { return bIsDead; }
+
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -78,6 +83,7 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -86,5 +92,6 @@ public:
 
 private:
 	int32 CollectedCoins = 0;
+	bool bIsDead = false;
 };
 
