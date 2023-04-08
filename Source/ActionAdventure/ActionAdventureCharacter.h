@@ -44,6 +44,10 @@ class AActionAdventureCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+	/** Interact Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* InteractAction;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	float WalkingMovementSpeed = 200.f;
 	
@@ -57,10 +61,18 @@ public:
 	void AddCoinToTotal(int32 CoinNumToAddIn);
 
 	void SetPlayerDeath() { bIsDead = true;}
+
+	void SetCanInteract(TObjectPtr<class AInteractiveBase> InteractClassIn, bool NewInteractIn);
 	
 	UFUNCTION(BlueprintCallable, Category = "Gameplay")
 	bool GetPlayerIsDead() const  { return bIsDead; }
 
+	UFUNCTION(BlueprintCallable, Category = "Gameplay")
+	bool GetIsHoldingTorch() { return bIsHoldingTorch; }
+
+	UFUNCTION(BlueprintCallable, Category = "Gameplay")
+	void RemovePlayerTorch();
+	
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -76,13 +88,18 @@ protected:
 	
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	/** Called for interact actions */
+	void Interact(const FInputActionValue& Value);
 	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	// To add mapping context
-	virtual void BeginPlay();
-
+	virtual void BeginPlay() override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
+	TSubclassOf<AInteractiveBase> InteractiveItemToHold;
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -93,5 +110,10 @@ public:
 private:
 	int32 CollectedCoins = 0;
 	bool bIsDead = false;
+	bool bCanInteract = false;
+	bool bIsHoldingTorch = false;
+
+	TObjectPtr<AInteractiveBase> InteractClass = nullptr;
+	TObjectPtr<AInteractiveBase> InteractClassToSpawn = nullptr;
 };
 

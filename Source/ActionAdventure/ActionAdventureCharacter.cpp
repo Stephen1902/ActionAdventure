@@ -9,7 +9,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-
+#include "InteractiveBase.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AActionAdventureCharacter
@@ -48,6 +48,10 @@ AActionAdventureCharacter::AActionAdventureCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	// For the player to hold things in their left hand
+	//LeftHandComp = CreateDefaultSubobject<ULeftHandComponent>(TEXT("Left Hand Comp"));
+	//LeftHandComp->SetupAttachment(GetMesh(), TEXT("hand_l"));
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
@@ -57,6 +61,20 @@ void AActionAdventureCharacter::AddCoinToTotal(int32 CoinNumToAddIn)
 	CollectedCoins += CoinNumToAddIn;
 	const FString StringToDisplay = "Player has " + FString::FromInt(CollectedCoins) + " coins.";
 	GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Green, *StringToDisplay);
+}
+
+void AActionAdventureCharacter::SetCanInteract(TObjectPtr<AInteractiveBase> InteractClassIn, bool NewInteractIn)
+{
+	bCanInteract = NewInteractIn;
+	
+	if (bCanInteract)
+	{
+		InteractClass = InteractClassIn;
+	}
+	else
+	{
+		InteractClass = nullptr;
+	}
 }
 
 void AActionAdventureCharacter::BeginPlay()
@@ -100,8 +118,20 @@ void AActionAdventureCharacter::SetupPlayerInputComponent(class UInputComponent*
 		
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::Look);
+
+		//Interacting
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AActionAdventureCharacter::Interact);
 	}
 
+}
+
+void AActionAdventureCharacter::RemovePlayerTorch()
+{
+	if (InteractClassToSpawn)
+	{
+		InteractClassToSpawn->Destroy();
+		InteractClassToSpawn = nullptr;
+	}
 }
 
 void AActionAdventureCharacter::Move(const FInputActionValue& Value)
@@ -169,6 +199,32 @@ void AActionAdventureCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AActionAdventureCharacter::Interact(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Interact Called"));
+	if (InteractClass != nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Interact Class is Valid"));
+		InteractClass->Destroy();
+		InteractClass = nullptr;		
+
+		if (InteractiveItemToHold)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("InteractiveItemToHold is Valid"));
+			const FActorSpawnParameters SpawnParameters;
+			InteractClassToSpawn = GetWorld()->SpawnActor<AInteractiveBase>(InteractiveItemToHold, GetActorLocation(), GetActorRotation(), SpawnParameters);
+			const FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true);
+
+			const FName SocketToAttachTo = FName("TorchSocket");
+			InteractClassToSpawn->AttachToComponent(GetMesh(), TransformRules, SocketToAttachTo);
+
+			bIsHoldingTorch = true;
+		}
+
+	}
+
 }
 
 
