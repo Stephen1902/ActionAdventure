@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "ActionAdventureCharacter.h"
+
+#include "EnemyCharacterBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -209,11 +211,11 @@ void AActionAdventureCharacter::Interact(const FInputActionValue& Value)
 		UE_LOG(LogTemp, Warning, TEXT("Interact Class is Valid"));
 		InteractClass->Destroy();
 		InteractClass = nullptr;		
-
+		
 		if (InteractiveItemToHold)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("InteractiveItemToHold is Valid"));
-			const FActorSpawnParameters SpawnParameters;
+			const FActorSpawnParameters SpawnParameters;	
 			InteractClassToSpawn = GetWorld()->SpawnActor<AInteractiveBase>(InteractiveItemToHold, GetActorLocation(), GetActorRotation(), SpawnParameters);
 			const FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true);
 

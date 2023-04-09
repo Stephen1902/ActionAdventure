@@ -101,6 +101,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
 	TSubclassOf<AInteractiveBase> InteractiveItemToHold;
 
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
