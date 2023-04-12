@@ -13,7 +13,7 @@ ADeathBox::ADeathBox()
 
 void ADeathBox::OnBeginOverlap(AActor* MyActor, AActor* OtherActor)
 {
-	GEngine->AddOnScreenDebugMessage(0, 1.f, FColor::Cyan, TEXT("You got me!"));
+	GEngine->AddOnScreenDebugMessage(0, 1.f, FColor::Cyan, *OtherActor->GetName());
 	if (AActionAdventureCharacter* PlayerCharacter = Cast<AActionAdventureCharacter>(OtherActor))
 	{
 		// Slow the game down by half for a visual effect

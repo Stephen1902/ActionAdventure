@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "EnemyCharacterBase.generated.h"
 
+struct FAIStimulus;
+
 UCLASS()
 class ACTIONADVENTURE_API AEnemyCharacterBase : public ACharacter
 {
@@ -20,21 +22,23 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	// Default movement speed for this enemy
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UAIPerceptionComponent> AIPerceptionComp;
+	float DefaultWalkSpeed = 200.f;
 
+	// Speed this enemy moves at when chasing the player
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UAISenseConfig_Sight> SightConfig;
-
+	float ChasingSpeed = 500.f;
+	
 	// A series of target points, placed in the world for the AI Enemy to patrol
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"), meta = (MakeEditWidget = true))
 	TArray<TObjectPtr<class ATargetPoint>> TargetPoints;
-	
-	UFUNCTION()
-	void PerceptionUpdated(const TArray<AActor*>&FoundActors);
 
 	UFUNCTION(BlueprintCallable,  Category = "Gameplay")
 	void SetTargetPoint(int32 TargetPointIn) { TargetPointID = TargetPointIn; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure,  Category = "Gameplay")
+	bool GetIsChasingPlayer() { return bIsChasingPlayer; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
 	int32 GetTargetPointID() { return TargetPointID; }
@@ -51,6 +55,9 @@ private:
 	
 	// Current Target Point the AI is trying to move to
 	int32 TargetPointID = 0;
+
+	// Whether this enemy is chasing the player or not
+	bool bIsChasingPlayer = false;
 
 	TObjectPtr<class AEnemyAIControllerBase> EnemyController = nullptr;
 

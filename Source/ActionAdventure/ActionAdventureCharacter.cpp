@@ -12,6 +12,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InteractiveBase.h"
+#include "ThrowableActor.h"
+#include "Kismet/KismetMathLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AActionAdventureCharacter
@@ -123,6 +125,9 @@ void AActionAdventureCharacter::SetupPlayerInputComponent(class UInputComponent*
 
 		//Interacting
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AActionAdventureCharacter::Interact);
+
+		//Throwing
+		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Started, this, &AActionAdventureCharacter::ThrowItem);
 	}
 
 }
@@ -179,7 +184,6 @@ void AActionAdventureCharacter::RunEnd(const FInputActionValue& Value)
 
 void AActionAdventureCharacter::SetPlayerCrouch(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Calling Crouch"));
 	if (!GetCharacterMovement()->IsCrouching())
 	{
 		Crouch();
@@ -205,16 +209,13 @@ void AActionAdventureCharacter::Look(const FInputActionValue& Value)
 
 void AActionAdventureCharacter::Interact(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Interact Called"));
 	if (InteractClass != nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Interact Class is Valid"));
 		InteractClass->Destroy();
 		InteractClass = nullptr;		
 		
 		if (InteractiveItemToHold)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("InteractiveItemToHold is Valid"));
 			const FActorSpawnParameters SpawnParameters;	
 			InteractClassToSpawn = GetWorld()->SpawnActor<AInteractiveBase>(InteractiveItemToHold, GetActorLocation(), GetActorRotation(), SpawnParameters);
 			const FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true);
@@ -227,6 +228,22 @@ void AActionAdventureCharacter::Interact(const FInputActionValue& Value)
 
 	}
 
+}
+
+void AActionAdventureCharacter::ThrowItem(const FInputActionValue& Value)
+{
+	if (ActorToThrow)
+	{
+		// Multiply the current forward vector by how many units the actor is to spawn to avoid issues with player character collision
+		const FVector CurrentForwardVector = GetActorForwardVector() * 50.f;
+		const FVector LocationToSpawnFrom = GetActorTransform().GetLocation() + CurrentForwardVector;
+		const FActorSpawnParameters SpawnParameters;
+		// Spawn the projectile
+		const TObjectPtr<AThrowableActor> SpawnedThrowable = GetWorld()->SpawnActor<AThrowableActor>(ActorToThrow, LocationToSpawnFrom, GetActorRotation(), SpawnParameters);
+		
+		SpawnedThrowable->LaunchOnSpawn(this);
+		
+	}
 }
 
 

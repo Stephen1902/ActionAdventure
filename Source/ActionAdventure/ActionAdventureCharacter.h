@@ -49,6 +49,9 @@ class AActionAdventureCharacter : public ACharacter
 	UInputAction* InteractAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* ThrowAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	float WalkingMovementSpeed = 200.f;
 	
 	/** Movement speed when running*/
@@ -91,6 +94,9 @@ protected:
 
 	/** Called for interact actions */
 	void Interact(const FInputActionValue& Value);
+
+	/** Called for throwing an item */
+	void ThrowItem(const FInputActionValue& Value);
 	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -101,6 +107,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
 	TSubclassOf<AInteractiveBase> InteractiveItemToHold;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable")
+	TSubclassOf<class AThrowableActor> ActorToThrow;
 
 public:
 	/** Returns CameraBoom subobject **/
