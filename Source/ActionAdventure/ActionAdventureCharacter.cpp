@@ -2,6 +2,7 @@
 
 #include "ActionAdventureCharacter.h"
 
+#include "DestroyableBase.h"
 #include "EnemyCharacterBase.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -355,6 +356,12 @@ void AActionAdventureCharacter::Fire(const FInputActionValue& Value)
 				//  Apply a physics force to it
 				HitResult.GetComponent()->AddImpulse(ImpulseToApply);
 			}
+			else if (TObjectPtr<ADestroyableBase> HitDestroyable = Cast<ADestroyableBase>(HitResult.GetActor()))
+			{
+				
+				HitDestroyable->TryToTakeDamage(WeaponDamage);
+			}
+					
 		}
 	}
 }

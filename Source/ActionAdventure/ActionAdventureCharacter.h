@@ -149,6 +149,10 @@ protected:
 	// The impulse to apply when the pistol hits something that is simulating physics
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
 	float WeaponPower = 1000.f;
+
+	// The amount of damage the weapon does to a destroyable actor
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	float WeaponDamage = 40.f;
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
