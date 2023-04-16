@@ -30,6 +30,12 @@ AInteractiveBase::AInteractiveBase()
 	FlameMeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	FlameMeshComp->SetGenerateOverlapEvents(false);
 
+	SkeletalMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh Comp"));
+	SkeletalMeshComp->SetupAttachment(RootComponent);
+	SkeletalMeshComp->CanCharacterStepUpOn = ECB_No;
+	SkeletalMeshComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SkeletalMeshComp->SetGenerateOverlapEvents(false);
+
 	ParticleSystemComp = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("Particle Comp"));
 	ParticleSystemComp->SetupAttachment(HandleMeshComp);
 	ParticleSystemComp->SetAutoActivate(true);
@@ -62,6 +68,7 @@ void AInteractiveBase::BeginPlay()
 
 void AInteractiveBase::OnBeginOverlap(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	GEngine->AddOnScreenDebugMessage(0, 2.0f, FColor::Green, TEXT("Overlap Begin"));
 	if (WidgetComp->GetWidget())
 	{
 		WidgetComp->SetVisibility(true);
@@ -77,6 +84,7 @@ void AInteractiveBase::OnBeginOverlap(UPrimitiveComponent* HitComp, AActor* Othe
 
 void AInteractiveBase::OnEndOverlap(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+
 	if (WidgetComp->GetWidget())
 	{
 		WidgetComp->SetVisibility(false);

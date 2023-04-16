@@ -6,6 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "InteractiveBase.generated.h"
 
+UENUM(BlueprintType) 
+enum class EHandItem : uint8
+{
+	EHI_Left	UMETA(DisplayName = "Left"),
+	EHI_Right	UMETA(DisplayName = "Right")
+};
+
 UCLASS()
 class ACTIONADVENTURE_API AInteractiveBase : public AActor
 {
@@ -25,6 +32,13 @@ public:
 	TObjectPtr<UStaticMeshComponent> FlameMeshComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
+	TObjectPtr<USkeletalMeshComponent> SkeletalMeshComp;
+
+	// Which hand to use when displaying the collected item
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
+	EHandItem HoldItemInWhichHand;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
 	TObjectPtr<UParticleSystemComponent> ParticleSystemComp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Setup")
@@ -37,6 +51,7 @@ public:
 	bool bStartParticlesActivated = false;
 
 	void SetCanInteractToFalse() { bIsInteractive = false; }
+	EHandItem GetHandToPlace() const { return HoldItemInWhichHand; }
 
 protected:
 	// Called when the game starts or when spawned

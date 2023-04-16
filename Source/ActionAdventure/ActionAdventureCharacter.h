@@ -20,7 +20,11 @@ class AActionAdventureCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
-	
+
+	/** Aiming Camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* AimingCamera;
+
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputMappingContext* DefaultMappingContext;
@@ -50,7 +54,13 @@ class AActionAdventureCharacter : public ACharacter
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* ThrowAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* AimAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* FireAction;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	float WalkingMovementSpeed = 200.f;
 	
@@ -58,6 +68,14 @@ class AActionAdventureCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	float RunningMovementSpeed = 500.f;
 
+	/** Montage to play when the player fires the pistol */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAnimMontage> FireMontageToPlay;
+	
+	/** Sound effect for when the player fires */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Setup, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USoundBase> FireSoundToPlay;
+	
 public:
 	AActionAdventureCharacter();
 	
@@ -75,6 +93,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Gameplay")
 	void RemovePlayerTorch();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gameplay")
+	bool GetIsAiming() const { return bIsAiming;}
 	
 protected:
 	/** Called for movement input */
@@ -97,6 +118,15 @@ protected:
 
 	/** Called for throwing an item */
 	void ThrowItem(const FInputActionValue& Value);
+
+	/** Called when aiming the weapon */
+	void AimStart(const FInputActionValue& Value);
+
+	/** Called when stopping aiming */
+	void AimEnd(const FInputActionValue& Value);
+
+	/** Called when firing a weapon */
+	void Fire(const FInputActionValue& Value);
 	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -105,11 +135,20 @@ protected:
 	virtual void BeginPlay() override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
-	TSubclassOf<AInteractiveBase> InteractiveItemToHold;
+	TSubclassOf<AInteractiveBase> InteractiveItemLeftHand;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interact")
+	TSubclassOf<AInteractiveBase> InteractiveItemRightHand;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Throwable")
 	TSubclassOf<class AThrowableActor> ActorToThrow;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	float WeaponFireDistance = 500.f;
+
+	// The impulse to apply when the pistol hits something that is simulating physics
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon")
+	float WeaponPower = 1000.f;
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -121,8 +160,11 @@ private:
 	bool bIsDead = false;
 	bool bCanInteract = false;
 	bool bIsHoldingTorch = false;
+	bool bHasPistol = false;
+	bool bIsAiming = false;
 
 	TObjectPtr<AInteractiveBase> InteractClass = nullptr;
 	TObjectPtr<AInteractiveBase> InteractClassToSpawn = nullptr;
+	
 };
 

@@ -13,6 +13,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InteractiveBase.h"
 #include "ThrowableActor.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -51,6 +52,11 @@ AActionAdventureCharacter::AActionAdventureCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+
+	// Create an aiming camera
+	AimingCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("AimingCamera"));
+	AimingCamera->SetupAttachment(CameraBoom);
+	AimingCamera->bUsePawnControlRotation = false;  // Camera does not rotate relative to arm
 
 	// For the player to hold things in their left hand
 	//LeftHandComp = CreateDefaultSubobject<ULeftHandComponent>(TEXT("Left Hand Comp"));
@@ -128,6 +134,13 @@ void AActionAdventureCharacter::SetupPlayerInputComponent(class UInputComponent*
 
 		//Throwing
 		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Started, this, &AActionAdventureCharacter::ThrowItem);
+
+		//Aiming
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Triggered, this, &AActionAdventureCharacter::AimStart);
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AActionAdventureCharacter::AimEnd);
+
+		//Firing
+		EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AActionAdventureCharacter::Fire);
 	}
 
 }
@@ -211,20 +224,37 @@ void AActionAdventureCharacter::Interact(const FInputActionValue& Value)
 {
 	if (InteractClass != nullptr)
 	{
+		const EHandItem ItemHand = InteractClass->GetHandToPlace();
 		InteractClass->Destroy();
-		InteractClass = nullptr;		
+		InteractClass = nullptr;
 		
-		if (InteractiveItemToHold)
+		// Check for a valid item in the set up and check whether the item being collected is a left or right hand item
+		if ((InteractiveItemLeftHand && ItemHand == EHandItem::EHI_Left) || (InteractiveItemRightHand && ItemHand == EHandItem::EHI_Right))
 		{
-			const FActorSpawnParameters SpawnParameters;	
-			InteractClassToSpawn = GetWorld()->SpawnActor<AInteractiveBase>(InteractiveItemToHold, GetActorLocation(), GetActorRotation(), SpawnParameters);
+			const FActorSpawnParameters SpawnParameters;
 			const FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, true);
-
-			const FName SocketToAttachTo = FName("TorchSocket");
+			FName SocketToAttachTo;
+			
+			if (ItemHand == EHandItem::EHI_Left)
+			{
+				InteractClassToSpawn = GetWorld()->SpawnActor<AInteractiveBase>(InteractiveItemLeftHand, GetActorLocation(), GetActorRotation(), SpawnParameters);
+				SocketToAttachTo = FName("TorchSocket");
+				bIsHoldingTorch = true;
+			}
+			else
+			{
+				InteractClassToSpawn = GetWorld()->SpawnActor<AInteractiveBase>(InteractiveItemRightHand, GetActorLocation(), GetActorRotation(), SpawnParameters);
+				SocketToAttachTo = FName("PistolSocket");
+				bHasPistol = true;
+			}
+			
 			InteractClassToSpawn->AttachToComponent(GetMesh(), TransformRules, SocketToAttachTo);
-
-			bIsHoldingTorch = true;
 		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Something failed"));
+		}
+
 
 	}
 
@@ -246,6 +276,86 @@ void AActionAdventureCharacter::ThrowItem(const FInputActionValue& Value)
 	}
 }
 
+void AActionAdventureCharacter::AimStart(const FInputActionValue& Value)
+{
+	if (bHasPistol)
+	{
+		bIsAiming = true;
+		FollowCamera->Deactivate();
+		AimingCamera->Activate();
+		bUseControllerRotationYaw = true;
+		bUseControllerRotationPitch = true;
+	}
+}
 
+void AActionAdventureCharacter::AimEnd(const FInputActionValue& Value)
+{
+	if (bHasPistol)
+	{
+		bIsAiming = false;
+		AimingCamera->Deactivate();
+		FollowCamera->Activate();
+		bUseControllerRotationYaw = false;
+		bUseControllerRotationPitch = false;
+	}
+}
 
+void AActionAdventureCharacter::Fire(const FInputActionValue& Value)
+{
+	// Can only fire if the player is holding the pistol
+	if (bHasPistol)
+	{
+		// Check for a valid fire montage from BP
+		if (FireMontageToPlay)
+		{
+			PlayAnimMontage(FireMontageToPlay, 1.0f, NAME_None);
+		}
+
+		FVector FireFromLocation;
+		FRotator FireFromRotation;
+		GetActorEyesViewPoint(FireFromLocation, FireFromRotation);
+		
+		// Try to get the socket at the end of the gun
+		if (AInteractiveBase* BaseRef = Cast<AInteractiveBase>(InteractClassToSpawn))
+		{
+			if (UObject* SK_MeshComp = BaseRef->GetDefaultSubobjectByName(FName("Skeletal Mesh Comp")))
+			{
+				if (USkeletalMeshComponent* WeaponMesh = Cast<USkeletalMeshComponent>(SK_MeshComp))
+				{
+					FireFromLocation = WeaponMesh->GetSocketLocation("FiringSocket");
+					FireFromRotation = WeaponMesh->GetSocketRotation("FiringSocket");
+				}
+			}
+		}
+
+		// Check if there is a valid sound to play and play it
+		if (FireSoundToPlay)
+		{
+			UGameplayStatics::PlaySoundAtLocation(this, FireSoundToPlay, FireFromLocation);
+		}
+
+		const FVector MeshCompRotationAsVector = FireFromRotation.Vector();
+		
+		const FVector FireToLocation = (MeshCompRotationAsVector * WeaponFireDistance) + FireFromLocation;
+
+		FHitResult HitResult;
+		FCollisionQueryParams CollisionParams;
+		CollisionParams.AddIgnoredActor(this);
+
+		// TODO Remove this line
+		DrawDebugLine(GetWorld(), FireFromLocation, FireToLocation, FColor::Green, true);
+
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, FireFromLocation, FireToLocation, ECC_Visibility, CollisionParams))
+		{
+			// Check if what was hit is simulating physics
+			if (HitResult.GetComponent()->IsSimulatingPhysics())
+			{
+				// Calculate where the actor was hit and multiply it by the Weapon Power
+				FVector ImpulseToApply = UKismetMathLibrary::GetDirectionUnitVector(HitResult.TraceStart, HitResult.TraceEnd) * WeaponPower;
+				//  Apply a physics force to it
+				HitResult.GetComponent()->AddImpulse(ImpulseToApply);
+			}
+		}
+	}
+}
 
